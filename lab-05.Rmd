@@ -1,7 +1,7 @@
 ---
 title: "Lab 05 - La Quinta is Spanish for next to Denny's, Pt. 2"
-author: "Insert your name here"
-date: "Insert date here"
+author: "Barbara Mu"
+date: "02/09/2026"
 output: github_document
 ---
 
@@ -16,34 +16,145 @@ library(dsbox)
 states <- read_csv("data/states.csv")
 ```
 
+```{r}
+dn <- dennys
+lq <- laquinta
+```
+
 ### Exercise 1
 
-Remove this text, and add your answer for Exercise 1 here.
-Add code chunks as needed.
-Don't forget to label your code chunk.
-Do not use spaces in code chunk labels.
+```{r}
+dn_ak <- dn %>%
+  filter(state == "AK")
+nrow(dn_ak)
+```
+
+```{r}
+lq_ak <- lq %>%
+  filter(state == "AK")
+nrow(lq_ak)
+```
 
 ### Exercise 2
+```{r}
+m <- nrow(dn_ak)
+n <- nrow(lq_ak)
+n_pairing <- m*n
+```
 
-Remove this text, and add your answer for Exercise 1 here.
-Add code chunks as needed.
-Don't forget to label your code chunk.
-Do not use spaces in code chunk labels.
+There are 6 possible pairs we can calculate their distance. 
 
 ### Exercise 3
 
-...
+```{r}
+dn_lq_ak <- full_join(dn_ak, lq_ak,
+  by = "state"
+)
+dn_lq_ak
+```
+
 
 ### Exercise 4
 
-...
+The combined data frame contains 6 observations as we joined them by `state`. 
 
 ### Exercise 5
 
-...
+```{r}
+haversine <- function(long1, lat1, long2, lat2, round = 3) {
+  # convert to radians
+  long1 <- long1 * pi / 180
+  lat1 <- lat1 * pi / 180
+  long2 <- long2 * pi / 180
+  lat2 <- lat2 * pi / 180
+
+  R <- 6371 # Earth mean radius in km
+
+  a <- sin((lat2 - lat1) / 2)^2 + cos(lat1) * cos(lat2) * sin((long2 - long1) / 2)^2
+  d <- R * 2 * asin(sqrt(a))
+
+  return(round(d, round)) # distance in km
+}
+```
+
+The function we should use is mutate(), as we need to create new variable 
 
 ### Exercise 6
 
-...
+```{r}
+dn_lq_ak <- dn_lq_ak %>%
+  mutate(distance = haversine(longitude.x, latitude.x, longitude.y, latitude.y))
+```
 
-Add exercise headings as needed.
+### Exercise 7 
+
+```{r}
+dn_lq_ak_mindist <- dn_lq_ak %>%
+  group_by(address.x) %>%
+  summarize(closest = min(distance))
+```
+
+### Exercise 8
+
+```{r}
+library(ggplot2)
+
+ggplot(dn_lq_ak_mindist, aes(x = address.x, y = closest, fill = address.x)) +
+  geom_col() +
+  coord_flip() +  
+  labs(
+    title = "Minimum Distance to La Quinta for each Denny's in AK",
+    x = "Denny's Address",
+    y = "Distance to Nearest La Quinta (km)"
+  ) +
+  theme_minimal() +
+  guides(fill = "none") 
+```
+
+### Exercise 9
+```{r}
+dn_nc <- dn %>% filter(state == "NC")
+lq_nc <- lq %>% filter(state == "NC")
+dn_lq_nc <- full_join(dn_nc, lq_nc, by = "state")
+
+dn_lq_nc <- dn_lq_nc %>%
+  mutate(distance = haversine(longitude.x, latitude.x, longitude.y, latitude.y))
+
+dn_lq_nc_mindist <- dn_lq_nc %>%
+  group_by(address.x) %>%
+  summarize(closest = min(distance))
+```
+
+### Exercise 10
+
+```{r}
+dn_tx <- dn %>% filter(state == "TX")
+lq_tx <- lq %>% filter(state == "TX")
+dn_lq_tx <- full_join(dn_tx, lq_tx, by = "state")
+
+dn_lq_tx <- dn_lq_tx %>%
+  mutate(distance = haversine(longitude.x, latitude.x, longitude.y, latitude.y))
+
+dn_lq_tx_mindist <- dn_lq_tx %>%
+  group_by(address.x) %>%
+  summarize(closest = min(distance))
+```
+
+### Exercise 11
+
+```{r}
+dn_ny <- dn %>% filter(state == "NY")
+lq_ny <- lq %>% filter(state == "NY")
+dn_lq_ny <- full_join(dn_ny, lq_ny, by = "state")
+
+dn_lq_ny <- dn_lq_ny %>%
+  mutate(distance = haversine(longitude.x, latitude.x, longitude.y, latitude.y))
+
+dn_lq_ny_mindist <- dn_lq_ny %>%
+  group_by(address.x) %>%
+  summarize(closest = min(distance))
+```
+
+### Exercise 12
+
+Mitch Hedberg’s joke is most likely to be true in Texas. By checking the distance datasets we created in the last four exercises, I found the smallest 'closet' value is from Texas (the address is 607 Avenue Q, and the distance between the Denny and La Quinta is 0.016)
